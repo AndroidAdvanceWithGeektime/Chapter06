@@ -38,7 +38,7 @@ int64_t monotonicTime() {
     return static_cast<int64_t>(ts.tv_sec) * kSecondNanos + ts.tv_nsec;
 }
 
-void log_systrace(int fd, const void *buf, size_t count) {
+void log_systrace(const void *buf, size_t count) {
     const char *msg = reinterpret_cast<const char *>(buf);
 
     switch (msg[0]) {
@@ -54,14 +54,23 @@ void log_systrace(int fd, const void *buf, size_t count) {
     }
 }
 
+bool should_log_systrace(int fd, size_t count) {
+    return systrace_installed && fd == *atrace_marker_fd && count > 0;
+}
 
 ssize_t write_hook(int fd, const void *buf, size_t count) {
-    log_systrace(fd, buf, count);
+    if (should_log_systrace(fd, count)) {
+        log_systrace(buf, count);
+        return count;
+    }
     return CALL_PREV(write_hook, fd, buf, count);
 }
 
 ssize_t __write_chk_hook(int fd, const void *buf, size_t count, size_t buf_size) {
-    log_systrace(fd, buf, count);
+    if (should_log_systrace(fd, count)) {
+        log_systrace(buf, count);
+        return count;
+    }
     return CALL_PREV(__write_chk_hook, fd, buf, count, buf_size);
 }
 
