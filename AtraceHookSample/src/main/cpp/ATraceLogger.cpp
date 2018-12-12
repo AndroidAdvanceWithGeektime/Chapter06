@@ -42,18 +42,31 @@ void log_systrace(const void *buf, size_t count) {
     const char *msg = reinterpret_cast<const char *>(buf);
 
     switch (msg[0]) {
+
         case 'B': { // begin synchronous event. format: "B|<pid>|<name>"
-            ALOG("========= %s|%d", msg, threadID());
+            ALOG("========= %s", msg);
             break;
         }
         case 'E': { // end synchronous event. format: "E"
+            ALOG("========= E");
+
             break;
         }
+            // the following events we don't currently log.
+        case 'S': // start async event. format: "S|<pid>|<name>|<cookie>"
+        case 'F': // finish async event. format: "F|<pid>|<name>|<cookie>"
+        case 'C': // counter. format: "C|<pid>|<name>|<value>"
         default:
             return;
     }
 }
 
+/**
+* 只针对特定的fd，降低性能影响
+* @param fd
+* @param count
+* @return
+*/
 bool should_log_systrace(int fd, size_t count) {
     return systrace_installed && fd == *atrace_marker_fd && count > 0;
 }
@@ -74,11 +87,12 @@ ssize_t __write_chk_hook(int fd, const void *buf, size_t count, size_t buf_size)
     return CALL_PREV(__write_chk_hook, fd, buf, count, buf_size);
 }
 
-
+/**
+* plt hook libc 的 write 方法，第一个参数的含义为排除掉 libc.so
+*/
 void hookLoadedLibs() {
     hook_plt_method("libc.so", "write", (hook_func) &write_hook);
     hook_plt_method("libc.so", "__write_chk", (hook_func) &__write_chk_hook);
-
 }
 
 static int getAndroidSdk() {
