@@ -88,7 +88,7 @@ ssize_t __write_chk_hook(int fd, const void *buf, size_t count, size_t buf_size)
 }
 
 /**
-* plt hook libc 的 write 方法，第一个参数的含义为排除掉 libc.so
+* plt hook libc 的 write 方法
 */
 void hookLoadedLibs() {
     hook_plt_method("libc.so", "write", (hook_func) &write_hook);

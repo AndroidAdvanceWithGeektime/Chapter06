@@ -37,9 +37,8 @@ NDK16~19
 ====
 ### hookLoadedLibs
 
-使用plt hook libc的 write 相关方法，其中第一个参数意思是不hook libc.so。
+使用plt hook libc的 write 相关方法，其中第一个参数意思是准备Hook的library名字。
 
-因为这两个方法本身就是在libc里面，plt hook的原理是去hook调用这个so的对应方法。
 
 这里我们用的是profilo中提供的plt hook库。
 
